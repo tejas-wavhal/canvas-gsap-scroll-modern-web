@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <div class="w-full bg-zinc-900">
+      <div id="" class="parent-wrapper w-full h-[700vh] bg-zinc-800 relative">
+        <div id="canvas-wrapper" class="sticky inset-0 w-full h-screen">
+          <canvas id="frame" class="w-full h-screen"></canvas>
+        </div>
+      </div>
+    </div>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script>
+      const canvas = document.getElementById("frame");
+      const ctx = canvas.getContext("2d");
+
+      const frames = {
+        currentIndex: 0,
+        maxIndex: 382,
+      };
+
+      let imageLoaded = 0;
+      let images = [];
+
+      const preLoadImages = () => {
+        for (let i = 1; i <= frames.maxIndex; i++) {
+          const img = new Image();
+          img.src = `./frames/frame_${i.toString().padStart(4, "0")}.jpeg`;
+          img.onload = () => {
+            imageLoaded++;
+            if (imageLoaded === frames.maxIndex) {
+              loadImage(frames.currentIndex);
+              startAnimation();
+            }
+          };
+          images.push(img);
+        }
+      };
+
+      function loadImage(index) {
+        if (index < 0 || index > frames.maxIndex) return;
+        const img = images[index];
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const scaleX = canvas.width / img.width;
+        const scaleY = canvas.height / img.height;
+
+        const scale = Math.max(scaleX, scaleY);
+
+        const width = img.width * scale;
+        const height = img.height * scale;
+
+        const x = (canvas.width - width) / 2;
+        const y = (canvas.height - height) / 2;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, x, y, width, height);
+
+        frames.currentIndex = index;
+      }
+
+      function startAnimation() {
+        gsap.registerPlugin(ScrollTrigger); // Register ScrollTrigger
+
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: ".parent-wrapper",
+            start: "top top",
+            end: "bottom bottom",
+            scrub: 2,
+          },
+        });
+
+        tl.to(frames, {
+          currentIndex: frames.maxIndex,
+          onUpdate: () => {
+            loadImage(Math.floor(frames.currentIndex));
+          },
+        });
+      }
+
+      preLoadImages();
+    </script>
+  </body>
+</html>
